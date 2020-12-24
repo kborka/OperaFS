@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace OperaFS_Viewer
+namespace OperaFS.Utilities
 {
     public class BigEndianBinaryReader : BinaryReader
     {

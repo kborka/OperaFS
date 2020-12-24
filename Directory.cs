@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using OperaFS.Utilities;
 
-namespace OperaFS_Viewer.Model
+namespace OperaFS
 {
     public class Directory
     {

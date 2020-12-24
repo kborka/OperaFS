@@ -1,7 +1,8 @@
 ﻿using System.IO;
 using System.Text;
+using OperaFS.Utilities;
 
-namespace OperaFS_Viewer.Model
+namespace OperaFS
 {
     public class SuperBlock
     {

@@ -4,8 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OperaFS.Utilities;
 
-namespace OperaFS_Viewer.Model
+namespace OperaFS
 {
     public class DirectoryHeader
     {

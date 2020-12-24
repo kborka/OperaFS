@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace OperaFS_Viewer.Model
+namespace OperaFS
 {
     public static class OperaFs
     {
