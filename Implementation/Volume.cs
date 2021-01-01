@@ -2,12 +2,11 @@
 using System.Linq;
 using OperaFS.Utilities;
 
-namespace OperaFS
+namespace OperaFS.Implementation
 {
-    public class Volume
+    internal class Volume
     {
         public const int SIZE = 83;
-
         private const int SYNCBYTECOUNT = 5;
         private const int VOLUMEINFOCOUNT = 32;
 

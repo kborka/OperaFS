@@ -2,7 +2,7 @@
 using System.Text;
 using OperaFS.Utilities;
 
-namespace OperaFS
+namespace OperaFS.Implementation
 {
     public class SuperBlock
     {
@@ -24,8 +24,8 @@ namespace OperaFS
 
         public byte VersionNumber { get; }
 
-        public Volume Volume { get; }
+        internal Volume Volume { get; }
 
-        public Root Root { get; }
+        internal Root Root { get; }
     }
 }

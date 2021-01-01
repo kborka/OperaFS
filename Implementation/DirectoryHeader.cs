@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using OperaFS.Utilities;
 
-namespace OperaFS
+namespace OperaFS.Implementation
 {
-    public class DirectoryHeader
+    internal class DirectoryHeader
     {
         public const int SIZE = 20;
 

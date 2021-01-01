@@ -3,9 +3,9 @@ using System.Linq;
 using System.Text;
 using OperaFS.Utilities;
 
-namespace OperaFS
+namespace OperaFS.Implementation
 {
-    public class DirectoryEntry
+    internal class DirectoryEntry
     {
 
         public const int BASIC_SIZE = 72;

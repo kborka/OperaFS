@@ -3,9 +3,9 @@ using System.IO;
 using System.Text;
 using OperaFS.Utilities;
 
-namespace OperaFS
+namespace OperaFS.Implementation
 {
-    public class Root
+    internal class Root
     {
         public const int SIZE = 48;
 

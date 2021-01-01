@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using OperaFS.Utilities;
 
-namespace OperaFS
+namespace OperaFS.Implementation
 {
-    public class Directory
+    internal class Directory
     {
         private List<DirectoryHeader> _headers;
+        
         public Directory(uint directoryByteLocation, string name)
         {
             Name = name;
