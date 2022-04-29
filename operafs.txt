@@ -1,0 +1,113 @@
+-== Introduction ==-
+
+The Opera file system is the file system used for CD-ROMS for the 3DO
+game console.
+Files and directories (?) are laid out contiguously on the disk. One of the
+nice features of the file system is that it can contain multiple copies of
+the same data; the 3DO operating system can choose the one which requires the
+least seeking, and can recover from read errors in one copy.
+Directory entries don't have a date or time stored.
+
+This Linux implementation of the file system ignores all but the first copy.
+If it is bad, you're out of luck.
+
+
+-== Mount options ==-
+
+uid=<uid>           use <uid> as the user id of all directory entries
+                    (defaults to the user mounting the file system)
+gid=<gid>           use <gid> as the group id of all directory entries
+                    (defaults to the user mounting the file system)
+fmask=<mask>        apply <mask> to the permissions of all files
+                    (defaults to the umask of the user performing the mount)
+dmask=<mask>        apply <mask> to the permissions of all directories
+                    (defaults to the umask of the user performing the mount)
+umask=<mask>        apply <mask> to the permissions of all files and
+                    directories.
+                    (defaults to the umask of the user performing the mount)
+showspecial         make special directory entries such as the
+                    volume label and a possible "catapult" file available
+                    as normal files.
+hidespecial         do not make special directory entries such as the
+                    volume label and a possible "catapult" file available
+                    as normal files. This is the default.
+
+
+
+-== File system description ==-
+
+Volume header record of a 3DO CD:
+0x00 - 0x00  1  u8   Record type (always 1)
+0x01 - 0x05  5  u8   Synchronisation bytes (always 0x5A) (padding?)
+0x06 - 0x06  1  u8   Record version (always 1)
+0x07 - 0x07  1  u8   volume flags (details unknown)
+0x08 - 0x27 32  u8   volume comment
+0x27 - 0x47 32  u8   volume label
+0x48 - 0x4b  4  u32  volume identifier
+0x4c - 0x4f  4  u32  block size (always 2048?)
+0x50 - 0x53  4  u32  block count (total number of blocks on the disk)
+
+0x54 - 0x57  4  u32  directory identifier for the root dir
+0x58 - 0x5b  4  u32  number of blocks in the root dir
+0x5c - 0x5f  4  u32  block size for the root dir
+                     (always the same as volume block size?)
+0x60 - 0x63  4  u32  last copy of the root dir (#copies - 1, always (?) 7)
+0x64 - 0x83 32  u32  locations of the copies, in blocks, counted from the
+                     beginning of the disk
+
+
+A directory block begins with a directory header, followed by zero or more
+directory entries. A directory may take multiple blocks.
+A directory entry is never split over multiple blocks; if a block does not
+have enough space for a complete entry, it can be partially unused.
+
+Directory header:
+0x00 - 0x03  4  s32? Next block in this directory, 0xffffffff if this is the
+                     last block.
+                     Offset in blocks from the first block in the dir?
+                     (if this is true, it can't be -1, as that is 0xffffffff)
+0x04 - 0x07  4  s32? Previous block in this directory, 0xffffffff if this is
+                     the first block.
+                     Offset in blocks from the first block in the dir?
+0x08 - 0x0b  4  u32  flags (details unknown)
+0x0c - 0x0f  4  u32  offset from the beginning of the block to the first
+                     unused byte in the block
+0x10 - 0x13  4  u32  offset from the beginning of the block to the first
+                     directory entry in this block (always (?) 0x14)
+
+Directory entry:
+0x00 - 0x03  4  u32  flags
+                     The least significant byte seems to be
+                     0x02 - File
+                     0x06 - Special file
+                     0x07 - Directory
+                     This is OR'ed with (one or more of):
+                     0x40000000 - this is the last dir entry in the block
+                     0x80000000 - this is the last dir entry of the dir
+0x04 - 0x07  4  u32  identifier
+0x08 - 0x0b  4  u8   entry type
+                     "*dir" - directory
+                     "*lbl" - label (points to volume header)
+                     "*zap" - catapult (fast startup information)
+                     something else - file. Seems to be the last 4 letters
+                         of the extension, right padded with spaces if less.
+                         Sometimes the case is retained, sometimes it is
+                         converted to lowercase.
+0x0c - 0x0f  4  u32  block size (always the same as volume block size?)
+0x10 - 0x13  4  u32  length of entry in bytes
+0x14 - 0x17  4  u32  length of entry in blocks
+0x19 - 0x1b  4  u32  burst (function unknown)
+0x1c - 0x1f  4  u32  gap (function unknown)
+0x20 - 0x3f 32  u8   File name, padded with '\0'. Not sure whether it's
+                     always \0-terminated.
+0x40 - 0x43  4  u32  number of the last copy of the entry (#copies - 1)
+0x43 -      4*n u32  offset to the copies, from the beginning of the disk,
+                     in blocks.
+
+
+-== Implementation notes ==-
+
+Inode numbers are set to the offset of the start of the directory entry
+concerned.
+
+
