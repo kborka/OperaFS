@@ -24,10 +24,9 @@
 
 
 struct file_operations opera_file_operations = {
-	.llseek = generic_file_llseek,
-	.read = do_sync_read,
-	.aio_read = generic_file_aio_read,
-	.mmap = generic_file_mmap,
+	.llseek      = generic_file_llseek,
+	.read_iter   = generic_file_read_iter,
+	.mmap        = generic_file_mmap,
 	.splice_read = generic_file_splice_read,
 };
 

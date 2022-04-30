@@ -22,6 +22,7 @@
 #include <linux/seq_file.h>
 #include <linux/time.h>
 #include <linux/buffer_head.h>
+#include <linux/slab.h>
 
 #include "operafs.h"
 
@@ -34,19 +35,19 @@ static void opera_destroy_inode(struct inode *inode);
 static void opera_put_super(struct super_block *sb);
 static int opera_statfs(struct dentry *dentry, struct kstatfs *buf);
 static int opera_remount(struct super_block *sb, int *flags, char *data);
-static int opera_show_options(struct seq_file *out, struct vfsmount *mnt);
+static int opera_show_options(struct seq_file *out, struct dentry *dentry);
 
 
 //============================================================================
 
 
 struct super_operations opera_super_ops = {
-	.alloc_inode = opera_alloc_inode,
+	.alloc_inode   = opera_alloc_inode,
 	.destroy_inode = opera_destroy_inode,
-	.put_super = opera_put_super,
-	.statfs = opera_statfs,
-	.remount_fs = opera_remount,
-	.show_options = opera_show_options,
+	.put_super     = opera_put_super,
+	.statfs        = opera_statfs,
+	.remount_fs    = opera_remount,
+	.show_options  = opera_show_options,
 };
 
 
@@ -144,11 +145,8 @@ operafs_iget(struct super_block *sb, unsigned long ino)
 		inode->i_fop = &opera_dir_operations;
 		inode->i_size = be32_to_cpu(tdd->block_count) *
 				be32_to_cpu(tdd->block_size);
-		inode->i_nlink = 2;
-		inode->i_nlink += opera_count_dirs(inode);
 	} else {
 		// is a file (possibly a special file)
-		inode->i_nlink = 1;
 		inode->i_mode = ((S_IRUGO | S_IWUGO) & ~sbi->options.fmask) | S_IFREG;
 		inode->i_op = &opera_file_inode_operations;
 		inode->i_fop = &opera_file_operations;
@@ -194,23 +192,23 @@ opera_statfs(struct dentry *dentry, struct kstatfs *buf)
 static int
 opera_remount(struct super_block *sb, int *flags, char *data)
 {
-	*flags |= MS_RDONLY;
+	*flags |= SB_RDONLY;
 	(void) sb;  /* Unused variable - satisfy compiler */
 	(void) data;  /* Unused variable - satisfy compiler */
 	return 0;
 }
 
 static int
-opera_show_options(struct seq_file *out, struct vfsmount *mnt)
+opera_show_options(struct seq_file *out, struct dentry *dentry)
 {
-	struct super_block *sb = mnt->mnt_sb;
+	struct super_block *sb = dentry->d_sb;
 	struct opera_sb_info *sbi = OPERA_SB(sb);
 	struct opera_fs_options *options = &sbi->options;
 	
-	if (options->uid != 0)
-		seq_printf(out, ",uid=%u", options->uid);
-	if (options->gid != 0)
-		seq_printf(out, ",gid=%u", options->gid);
+	if (!uid_eq(options->uid, GLOBAL_ROOT_UID))
+		seq_printf(out, ",uid=%u", from_kuid_munged(&init_user_ns, options->uid));
+	if (!gid_eq(options->gid, GLOBAL_ROOT_GID))
+		seq_printf(out, ",gid=%u", from_kgid_munged(&init_user_ns, options->gid));
 	seq_printf(out, ",fmask=%04o", options->fmask);
 	seq_printf(out, ",dmask=%04o", options->dmask);
 	if (options->show_special != OPERA_DEFAULT_SHOW_SPECIAL) {
@@ -221,5 +219,3 @@ opera_show_options(struct seq_file *out, struct vfsmount *mnt)
 	}
 	return 0;
 }
-
-

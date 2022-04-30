@@ -37,6 +37,7 @@
 #include <linux/buffer_head.h>
 #include <linux/sched.h>
 #include <linux/fs_struct.h>
+#include <linux/slab.h>
 
 #include "operafs.h"
 
@@ -46,18 +47,13 @@
 
 static int __init init_opera_fs(void);
 static void __exit exit_opera_fs(void);
-static int opera_get_sb(struct file_system_type *fs_type,
-		int flags, const char *dev_name, void *data, struct vfsmount *mnt);
+static struct dentry *opera_mount(struct file_system_type *fs_type, int flags, const char *dev_name, void *data);
 static int opera_init_inodecache(void);
 static void opera_destroy_inodecache(void);
 static void opera_inode_init_once(void *info_in);
-static int opera_fill_super(struct super_block *sb, void *data,
-		int silent);
-static int parse_mount_options(char *optstr,
-		struct opera_fs_options *options);
-static int opera_make_root_inode(struct super_block *sb,
-		const struct opera_disk_superblock *dsb, struct inode **inode_out,
-		int silent);
+static int opera_fill_super(struct super_block *sb, void *data, int silent);
+static int parse_mount_options(char *optstr, struct opera_fs_options *options);
+static int opera_make_root_inode(struct super_block *sb, const struct opera_disk_superblock *dsb, struct inode **inode_out,  int silent);
 
 
 //============================================================================
@@ -66,7 +62,7 @@ static int opera_make_root_inode(struct super_block *sb,
 static struct file_system_type opera_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "opera",
-	.get_sb		= opera_get_sb,
+	.mount		= opera_mount,
 	.kill_sb	= kill_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,
 };
@@ -139,8 +135,14 @@ opera_destroy_inodecache(void)
 }
 
 enum {
-	Opt_uid, Opt_gid, Opt_umask, Opt_dmask, Opt_fmask,
-	Opt_showspecial, Opt_hidespecial, Opt_err
+	Opt_uid,
+	Opt_gid,
+	Opt_umask,
+ 	Opt_dmask,
+	Opt_fmask,
+	Opt_showspecial,
+	Opt_hidespecial,
+	Opt_err
 };
 
 static match_table_t opera_option_tokens = {
@@ -155,7 +157,8 @@ static match_table_t opera_option_tokens = {
 };
 
 static int
-parse_mount_options(char *optstr, struct opera_fs_options *options) {
+parse_mount_options(char *optstr, struct opera_fs_options *options)
+{
 	char *ptr;
 	substring_t args[MAX_OPT_ARGS];
 	int temp_int;
@@ -170,12 +173,12 @@ parse_mount_options(char *optstr, struct opera_fs_options *options) {
 			case Opt_uid:
 				if (match_int(&args[0], &temp_int))
 					return 0;
-				options->uid = temp_int;
+				options->uid = make_kuid(current_user_ns(), temp_int);
 				break;
 			case Opt_gid:
 				if (match_int(&args[0], &temp_int))
 					return 0;
-				options->gid = temp_int;
+				options->gid = make_kgid(current_user_ns(), temp_int);
 				break;
 			case Opt_umask:
 				if (match_int(&args[0], &temp_int))
@@ -208,11 +211,10 @@ parse_mount_options(char *optstr, struct opera_fs_options *options) {
 	return 0;
 }
 
-static int
-opera_get_sb(struct file_system_type *fs_type, int flags,
-		const char *dev_name, void *data, struct vfsmount *mnt)
+static struct dentry *
+opera_mount(struct file_system_type *fs_type, int flags, const char *dev_name, void *data)
 {
-	return get_sb_bdev(fs_type, flags, dev_name, data, opera_fill_super, mnt);
+	return mount_bdev(fs_type, flags, dev_name, data, opera_fill_super);
 }
 
 static int
@@ -240,7 +242,7 @@ opera_fill_super(struct super_block *sb, void *data, int silent)
 		goto out_err;
 
 	sb->s_magic = OPERA_MAGIC;
-	sb->s_flags |= MS_RDONLY;
+	sb->s_flags |= SB_RDONLY;
 
 	sb_set_blocksize(sb, 512);
 
@@ -302,11 +304,13 @@ opera_fill_super(struct super_block *sb, void *data, int silent)
 		error = -EINVAL;
 		goto out_err;
 	}
+
+	brelse(bh);
 	sbi->block_shift = 0;
 	while ((sbi->block_size >> (sbi->block_shift + 1)) != 0)
 			sbi->block_shift++;
 	sb_set_blocksize(sb, sbi->block_size);
-	
+
 	sbi->block_count = be32_to_cpu(dsb->volume.block_count);
 
 	sbi->sb = sb;
@@ -319,7 +323,7 @@ opera_fill_super(struct super_block *sb, void *data, int silent)
 	if (error)
 		goto out_err;
 
-	sb->s_root = d_alloc_root(root_inode);
+	sb->s_root = d_make_root(root_inode);
 	if (sb->s_root == NULL) {
 		error = -ENOMEM;
 		goto out_err;
@@ -340,9 +344,8 @@ out_err:
 }
 
 static int
-opera_make_root_inode(struct super_block *sb,
-		const struct opera_disk_superblock *dsb, struct inode **inode_out,
-		int silent) {
+opera_make_root_inode(struct super_block *sb, const struct opera_disk_superblock *dsb, struct inode **inode_out, int silent)
+{
 	struct inode *inode;
 	struct opera_sb_info *sbi = OPERA_SB(sb);
 
@@ -375,8 +378,6 @@ opera_make_root_inode(struct super_block *sb,
 			be32_to_cpu(dsb->root.block_size);
 	inode->i_blocks = be32_to_cpu(dsb->root.block_count);
 	OPERA_I(inode)->start_block = be32_to_cpu(dsb->root.copies[0]);
-	inode->i_nlink = 2;
-	inode->i_nlink += opera_count_dirs(inode);
 	
 	*inode_out = inode;
 

@@ -17,17 +17,14 @@
 
 #include <linux/types.h>
 #include <linux/fs.h>
-#include <linux/smp_lock.h>
 
 #include "operafs.h"
 
 //============================================================================
 
 
-static struct dentry *opera_lookup(struct inode *dir, struct dentry *dentry,
-		struct nameidata *nd);
-static int opera_lookup_callback(void *data, const char *name,
-		size_t name_len, ino_t ino, unsigned int type);
+static struct dentry *opera_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags);
+static int opera_lookup_callback(void *data, const char *name, size_t name_len, ino_t ino, unsigned int type);
 
 
 //============================================================================
@@ -53,14 +50,12 @@ struct lookup_arg {
 			// match found and error.
 };
 
-static struct dentry *
-opera_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
+static struct dentry *opera_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 {
 	int res;
 	struct lookup_arg arg;
 	loff_t pos = 0;
 
-	lock_kernel();
 	arg.dentry = dentry;
 	arg.sb = dir->i_sb;
 	arg.found_match = 0;
@@ -85,15 +80,11 @@ opera_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
 	}
 	
 out:
-	unlock_kernel();
-
-	(void) nd;  /* Unused variable - satisfy compiler */
 	return ERR_PTR(res);
 }
 
-static int
-opera_lookup_callback(void *data, const char *name, size_t name_len,
-		ino_t ino, unsigned int type) {
+static int opera_lookup_callback(void *data, const char *name, size_t name_len, ino_t ino, unsigned int type)
+{
 	struct lookup_arg *arg = (struct lookup_arg *) data;
 	struct inode *inode;
 

@@ -17,7 +17,6 @@
 
 #include <linux/types.h>
 #include <linux/fs.h>
-#include <linux/smp_lock.h>
 #include <linux/buffer_head.h>
 
 #include "operafs.h"
@@ -26,17 +25,16 @@
 //============================================================================
 
 
-static int opera_readdir(struct file *f, void *dirent, filldir_t filldir);
-static int opera_readdir_callback(void *data, const char *name, size_t len,
-		ino_t ino, unsigned int type);
+static int opera_readdir(struct file *f, struct dir_context *ctx);
+static int opera_readdir_callback(void *data, const char *name, size_t len, ino_t ino, unsigned int type);
 
 
 //============================================================================
 
 
 struct file_operations opera_dir_operations = {
-	.read = generic_read_dir,
-	.readdir = opera_readdir,
+	.read           = generic_read_dir,
+	.iterate_shared = opera_readdir,
 };
 
 
@@ -44,28 +42,23 @@ struct file_operations opera_dir_operations = {
 
 
 struct opera_readdir_callback_arg {
-	filldir_t filldir;
-	void *dirent;
+	struct dir_context *ctx;
 };
 
 static int
-opera_readdir(struct file *file, void *dirent, filldir_t filldir)
+opera_readdir(struct file *file, struct dir_context *ctx)
 {
-	struct inode *inode = file->f_dentry->d_inode;
+	struct inode *inode = file_inode(file);
 	struct opera_readdir_callback_arg arg;
 	int stored;
 	int res;
 
-	arg.filldir = filldir;
-	arg.dirent = dirent;
+	arg.ctx = ctx;
 
-	lock_kernel();
-			// XXX: What are we protecting anyhow?
-	
 	stored = 0;
 	switch (file->f_pos) {
 		case 0:  // Make an entry "."
-			res = filldir(dirent, ".", 1, inode->i_ino, inode->i_ino
+			res = ctx->actor(ctx, ".", 1, inode->i_ino, inode->i_ino
 					/* The inode is the position */, DT_DIR);
 			if (res < 0)
 				goto out;
@@ -73,8 +66,8 @@ opera_readdir(struct file *file, void *dirent, filldir_t filldir)
 			file->f_pos = 1;
 			/* fallthrough */
 		case 1: {  // Make an entry ".."
-			ino_t pi = parent_ino(file->f_dentry);
-			res = filldir(dirent, "..", 2, pi, pi
+			ino_t pi = parent_ino(file->f_path.dentry);
+			res = ctx->actor(ctx, "..", 2, pi, pi
 					/* The inode is the position */, DT_DIR);
 			if (res < 0)
 				goto out;
@@ -84,8 +77,7 @@ opera_readdir(struct file *file, void *dirent, filldir_t filldir)
 		}
 	}
 
-	res = opera_for_all_entries(inode, &file->f_pos,
-			opera_readdir_callback, (void *) &arg);
+	res = opera_for_all_entries(inode, &ctx->pos, opera_readdir_callback, (void *) &arg);
 	if (res >= 0) {
 		// res is the number of entries stored in opera_for_all_entries()
 		res += stored;
@@ -95,17 +87,16 @@ opera_readdir(struct file *file, void *dirent, filldir_t filldir)
 	}
 
 out:
-	unlock_kernel();
 	return res;
 }
 
 static int
-opera_readdir_callback(void *data, const char *name, size_t len,
-		ino_t ino, unsigned int type) {
+opera_readdir_callback(void *data, const char *name, size_t len, ino_t ino, unsigned int type)
+{
 	struct opera_readdir_callback_arg *arg =
 			(struct opera_readdir_callback_arg *) data;
 
-	return arg->filldir(arg->dirent, name, len, ino, ino, type);
+	return arg->ctx->actor(arg->ctx, name, len, ino, ino, type);
 			// The inode number is the position.
 }
 

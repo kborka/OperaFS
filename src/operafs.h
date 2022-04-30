@@ -111,8 +111,8 @@ struct opera_disk_dirent {
 } __attribute__((packed));
 
 struct opera_fs_options {
-	uid_t uid;  // uid of files and directories
-	gid_t gid;  // gid of files and directories
+	kuid_t uid;  // uid of files and directories
+	kgid_t gid;  // gid of files and directories
 	mode_t fmask;  // file mask
 	mode_t dmask;  // directory mask
 	int show_special: 1;  // show special files?

@@ -27,8 +27,7 @@
 
 static int opera_readpage(struct file *file, struct page *page);
 static sector_t opera_bmap(struct address_space *mapping, sector_t block);
-static int opera_get_block(struct inode *inode, sector_t iblock,
-		struct buffer_head *bh_result, int create);
+static int opera_get_block(struct inode *inode, sector_t iblock, struct buffer_head *bh_result, int create);
 
 
 //============================================================================
@@ -36,7 +35,7 @@ static int opera_get_block(struct inode *inode, sector_t iblock,
 
 struct address_space_operations opera_address_operations = {
 	.readpage = opera_readpage,
-	.bmap = opera_bmap,
+	.bmap     = opera_bmap,
 };
 
 
@@ -58,8 +57,7 @@ opera_bmap(struct address_space *mapping, sector_t block)
 }
 
 static int
-opera_get_block(struct inode *inode, sector_t iblock,
-		struct buffer_head *bh_result, int create)
+opera_get_block(struct inode *inode, sector_t iblock, struct buffer_head *bh_result, int create)
 {
 	struct super_block *sb = inode->i_sb;
 	struct opera_sb_info *sbi = OPERA_SB(sb);

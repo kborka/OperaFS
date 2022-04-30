@@ -25,8 +25,7 @@
 // ============================================================================
 
 
-static int opera_count_dirs_callback(void *data, const char *name,
-		size_t name_len, ino_t ino, unsigned int type);
+static int opera_count_dirs_callback(void *data, const char *name, size_t name_len, ino_t ino, unsigned int type);
 
 
 // ============================================================================
@@ -39,11 +38,9 @@ static int opera_count_dirs_callback(void *data, const char *name,
 // *start_pos is updated for each entry read.
 // This function does not lock the kernel. That's up to the caller.
 int
-opera_for_all_entries(struct inode *inode, loff_t *start_pos,
-		opera_for_all_callback callback, void *data)
+opera_for_all_entries(struct inode *inode, loff_t *start_pos, opera_for_all_callback callback, void *data)
 {
-	int stored = 0;
-			// number of directory entries stored this call so far
+	int stored = 0;// number of directory entries stored this call so far
 	struct super_block *sb = inode->i_sb;
 	struct opera_sb_info *sbi = OPERA_SB(sb);
 	struct opera_inode_info *info = OPERA_I(inode);
@@ -227,7 +224,8 @@ struct opera_count_dirs_arg {
 };
 
 int
-opera_count_dirs(struct inode *inode) {
+opera_count_dirs(struct inode *inode)
+{
 	struct opera_count_dirs_arg arg;
 	int res;
 	loff_t pos;
@@ -244,8 +242,8 @@ opera_count_dirs(struct inode *inode) {
 }
 
 static int
-opera_count_dirs_callback(void *data, const char *name, size_t name_len,
-		ino_t ino, unsigned int type) {
+opera_count_dirs_callback(void *data, const char *name, size_t name_len, ino_t ino, unsigned int type)
+{
 	struct opera_count_dirs_arg *arg =
 			(struct opera_count_dirs_arg *) data;
 	
