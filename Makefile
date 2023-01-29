@@ -5,5 +5,5 @@ SUBDIRS := src
 
 $(TARGETS): $(SUBDIRS)
 
-$(SUBDIRS):
-        $(MAKE) -C $@ $(MAKECMDGOALS)
+$(SUBDIRS): 
+	$(MAKE) -C $@ $(MAKECMDGOALS)
