@@ -25,7 +25,7 @@
 //============================================================================
 
 
-static int opera_readpage(struct file *file, struct page *page);
+static int opera_read_folio(struct file *file, struct folio *folio);
 static sector_t opera_bmap(struct address_space *mapping, sector_t block);
 static int opera_get_block(struct inode *inode, sector_t iblock, struct buffer_head *bh_result, int create);
 
@@ -34,8 +34,8 @@ static int opera_get_block(struct inode *inode, sector_t iblock, struct buffer_h
 
 
 struct address_space_operations opera_address_operations = {
-	.readpage = opera_readpage,
-	.bmap     = opera_bmap,
+	.read_folio = opera_read_folio,
+	.bmap       = opera_bmap,
 };
 
 
@@ -43,10 +43,10 @@ struct address_space_operations opera_address_operations = {
 
 
 static int
-opera_readpage(struct file *file, struct page *page)
+opera_read_folio(struct file *file, struct folio *folio)
 {
 	(void) file;  /* Unused variable - satisfy compiler */
-	return block_read_full_page(page, opera_get_block);
+	return block_read_full_folio(folio, opera_get_block);
 }
 
 
