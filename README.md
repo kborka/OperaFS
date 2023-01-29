@@ -1,6 +1,10 @@
 # OperaFS
 
-A Linux module for mounting CD-ROMs and ISO images from the 3DO game system. Code originally written by Serge van der Boom and found at [http://www.stack.nl~svdb/operafs/](https://archive.is/DVsH). Code updated to work with current kernel by Kevin Borka. Tested on Debian against kernels 5.10.0-13-amd64 and 5.17.0-1-amd64.
+A Linux module for mounting CD-ROMs and ISO images from the 3DO game system. Code originally written by Serge van der Boom and found at [http://www.stack.nl~svdb/operafs/](https://archive.is/DVsH). Code updated to work with current kernel by Kevin Borka.
+
+5.x\_Kern\_Support tag tested on Debian against kernels 5.10.0-13-amd64 and 5.17.0-1-amd64.
+
+6.x\_Kern\_Support tag tested on Degian against 6.1.0-2-amd64.
 
 ## Installation
 
