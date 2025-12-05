@@ -128,12 +128,12 @@ operafs_iget(struct super_block *sb, unsigned long ino)
 
 	inode->i_uid = sbi->options.uid;
 	inode->i_gid = sbi->options.gid;
-	inode->i_mtime.tv_sec = 0;
-	inode->i_mtime.tv_nsec = 0;
-	inode->i_atime.tv_sec = 0;
-	inode->i_atime.tv_nsec = 0;
-	inode->i_ctime.tv_sec = 0;
-	inode->i_ctime.tv_nsec = 0;
+	inode->i_mtime_sec = 0;
+	inode->i_mtime_nsec = 0;
+	inode->i_atime_sec = 0;
+	inode->i_atime_nsec = 0;
+	inode->i_ctime_sec = 0;
+	inode->i_ctime_nsec = 0;
 	
 	inode->i_blocks = be32_to_cpu(tdd->block_count);
 

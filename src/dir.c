@@ -66,7 +66,7 @@ opera_readdir(struct file *file, struct dir_context *ctx)
 			file->f_pos = 1;
 			/* fallthrough */
 		case 1: {  // Make an entry ".."
-			ino_t pi = parent_ino(file->f_path.dentry);
+			ino_t pi = d_parent_ino(file->f_path.dentry);
 			res = ctx->actor(ctx, "..", 2, pi, pi
 					/* The inode is the position */, DT_DIR);
 			if (res < 0)

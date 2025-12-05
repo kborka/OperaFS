@@ -4,7 +4,11 @@ A Linux module for mounting CD-ROMs and ISO images from the 3DO game system. Cod
 
 5.x\_Kern\_Support tag tested on Debian against kernels 5.10.0-13-amd64 and 5.17.0-1-amd64.
 
-6.x\_Kern\_Support tag tested on Degian against 6.1.0-2-amd64.
+6.x\_Kern\_Support tag tested on Debian against 6.1.0-2-amd64. and 6.12.57+deb13-amd64
+
+## Issues
+
+With the 6.x kernel, running the `ls` command against non-root directories returns a "Bad file descriptor" error, and dmesg logs a "Bad directory entry" message. Mounting images will also cause dmesg to log an error with brelse trying to free an already freed buffer.
 
 ## Installation
 

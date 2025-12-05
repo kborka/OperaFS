@@ -27,7 +27,7 @@ struct file_operations opera_file_operations = {
 	.llseek      = generic_file_llseek,
 	.read_iter   = generic_file_read_iter,
 	.mmap        = generic_file_mmap,
-	.splice_read = generic_file_splice_read,
+	.splice_read = filemap_splice_read,
 };
 
 
